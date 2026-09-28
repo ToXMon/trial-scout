@@ -25,6 +25,7 @@ import json
 import os
 import threading
 import time
+import urllib.error
 import urllib.request
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -283,6 +284,13 @@ class Handler(BaseHTTPRequestHandler):
                 result = json.loads(response.read().decode("utf-8"))
             reply = result["choices"][0]["message"]["content"]
             self._json(200, {"reply": reply})
+        except urllib.error.HTTPError as exc:
+            if exc.code in (401, 403):
+                self._json(200, {"reply": "The AI helper is not connected yet. "
+                                 "Ask Tolu to check the OpenAI key on the deployment."})
+            else:
+                self._json(502, {"reply": "The AI helper had a problem (HTTP "
+                                 + str(exc.code) + "). Try again in a moment."})
         except Exception as exc:
             self._json(502, {"reply": "The AI helper had a connection problem. "
                              "Try again in a moment. (" + str(exc)[:120] + ")"})
