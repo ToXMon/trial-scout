@@ -225,7 +225,36 @@ document.getElementById("profile-form").addEventListener("submit", async (ev) =>
     await loadTrials();
     btn.disabled = false; btn.textContent = "Check for new trials";
   }, 90000);
-  alert("Saved. The list will refresh in about a minute.");
+  showNotice("Saved. The list will refresh in about a minute.");
+});
+
+function showNotice(text) {
+  let bar = document.getElementById("notice");
+  if (!bar) {
+    bar = document.createElement("div");
+    bar.id = "notice";
+    bar.style.cssText = "position:fixed;left:50%;transform:translateX(-50%);"
+      + "bottom:26px;z-index:70;background:#14532d;color:#fff;padding:12px 20px;"
+      + "border-radius:10px;font-size:17px;box-shadow:0 4px 14px rgba(0,0,0,0.3);";
+    document.body.appendChild(bar);
+  }
+  bar.textContent = text;
+  bar.style.display = "block";
+  setTimeout(() => { bar.style.display = "none"; }, 6000);
+}
+
+document.addEventListener("keydown", (ev) => {
+  if (ev.key === "Escape") {
+    closeModal("trial-modal");
+    closeModal("profile-modal");
+    document.getElementById("chat-panel").hidden = true;
+  }
+});
+
+document.addEventListener("mousedown", (ev) => {
+  if (ev.target.classList && ev.target.classList.contains("modal-backdrop")) {
+    ev.target.hidden = true;
+  }
 });
 
 document.getElementById("btn-rescan").addEventListener("click", async function () {
