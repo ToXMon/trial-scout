@@ -35,6 +35,7 @@ from trial_scout import client, monitor, scoring
 
 NL = chr(10)
 WEB_DIR = Path(__file__).resolve().parent / "web"
+SCIENCE_PATH = Path(__file__).resolve().parent / "science_notes.md"
 LATEST = {"updated": None, "trials": [], "events": [], "error": None}
 LOCK = threading.Lock()
 RESCANNING = {"busy": False}
