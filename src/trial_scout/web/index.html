@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trial Scout - Parkinson's Trial Finder</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header>
+  <div class="brand">
+    <h1>Trial Scout</h1>
+    <p class="tagline">Finding Parkinson's research studies near you</p>
+  </div>
+  <div class="header-actions">
+    <button id="btn-rescan" class="btn secondary">Check for new trials</button>
+    <button id="btn-profile" class="btn secondary">His information</button>
+  </div>
+</header>
+
+<div id="status-bar">
+  <span id="updated-text">Loading...</span>
+  <span id="error-text" class="error" hidden></span>
+</div>
+
+<nav class="filters" id="filters">
+  <button class="filter active" data-filter="all">All</button>
+  <button class="filter" data-filter="candidate">Good matches</button>
+  <button class="filter" data-filter="dbs-conflict">DBS conflict</button>
+  <button class="filter" data-filter="watch">Keep an eye on</button>
+  <button class="filter" data-filter="needs-verification">Ask the doctor</button>
+  <button class="filter" data-filter="likely-excluded">Not a fit</button>
+  <button class="filter" data-filter="favorites">Starred</button>
+</nav>
+
+<main id="trial-list" role="list"></main>
+
+<section class="research" id="research-section" hidden>
+  <h2>Latest research notes</h2>
+  <p class="muted">Notes from ongoing research reviews, updated by the family.</p>
+  <div id="digest-content" class="digest"></div>
+</section>
+
+<footer>
+  <p>This tool helps you find and understand research studies. It does not
+  give medical advice. Only a trial site and your doctor can say whether a
+  study is right for you.</p>
+</footer>
+
+<div class="modal-backdrop" id="trial-modal" hidden>
+  <div class="modal" role="dialog" aria-modal="true">
+    <button class="close" id="modal-close" aria-label="Close">&times;</button>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="profile-modal" hidden>
+  <div class="modal" role="dialog" aria-modal="true">
+    <button class="close" id="profile-close" aria-label="Close">&times;</button>
+    <h2>His information</h2>
+    <p class="muted">This shapes which trials appear as good matches. Stored
+    only in this app.</p>
+    <form id="profile-form">
+      <label>Age
+        <input type="number" id="p-age" min="30" max="100" required>
+      </label>
+      <label>Deep brain stimulation (DBS)
+        <select id="p-dbs">
+          <option value="none">None, not considering</option>
+          <option value="considering">Considering it</option>
+          <option value="implanted">Already has one</option>
+        </select>
+      </label>
+      <label>Disease stage
+        <select id="p-stage">
+          <option value="early">Early - still independent</option>
+          <option value="moderate">Moderate - symptoms affect daily life</option>
+          <option value="advanced">Advanced - needs daily care</option>
+          <option value="unsure">Not sure</option>
+        </select>
+      </label>
+      <label>Years on levodopa (0 if none)
+        <input type="number" id="p-levodopa" min="0" max="40">
+      </label>
+      <label>Willing to travel
+        <select id="p-travel">
+          <option value="same_city">About an hour</option>
+          <option value="half_day">Up to 2.5 hours</option>
+          <option value="full_day">Up to 5 hours</option>
+          <option value="any">Anywhere in the US</option>
+        </select>
+      </label>
+      <label>Home city
+        <select id="p-city"></select>
+      </label>
+      <button type="submit" class="btn primary">Save</button>
+    </form>
+  </div>
+</div>
+
+<button id="chat-fab" class="chat-fab" aria-label="Ask a question">&#128172; Ask</button>
+
+<div class="chat-panel" id="chat-panel" hidden>
+  <div class="chat-head">
+    <strong>Ask about the trials</strong>
+    <button id="chat-close" class="close" aria-label="Close chat">&times;</button>
+  </div>
+  <div class="chat-log" id="chat-log">
+    <div class="msg bot">Hello! Ask me anything about the studies listed
+    here. I can explain what a phase means, what visiting a site is like,
+    or how to talk to the study team. I cannot give medical advice.</div>
+  </div>
+  <form class="chat-input" id="chat-form">
+    <input type="text" id="chat-text" placeholder="Type a question..."
+           autocomplete="off">
+    <button type="submit" class="btn primary">Send</button>
+  </form>
+</div>
+
+<script src="/app.js"></script>
+</body>
+</html>
