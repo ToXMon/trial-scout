@@ -23,6 +23,7 @@ Endpoints:
 
 import json
 import os
+import re
 import threading
 import time
 import urllib.error
@@ -197,6 +198,8 @@ class Handler(BaseHTTPRequestHandler):
             self._context()
         elif path == "/api/profile":
             self._json(200, {"profile": current_profile()})
+        elif path.startswith("/trial/"):
+            self._study_page(path.split("/trial/", 1)[1])
         else:
             self._json(404, {"error": "not found"})
 
@@ -222,6 +225,56 @@ class Handler(BaseHTTPRequestHandler):
             self._chat(self._body())
         else:
             self._json(404, {"error": "not found"})
+
+    def _study_page(self, nct_id):
+        nct_id = nct_id.strip("/")
+        if not re.fullmatch(r"NCT\d{8,10}", nct_id or ""):
+            self._json(400, {"error": "invalid study id"})
+            return
+        try:
+            study = client.fetch_study(nct_id)
+        except Exception as exc:
+            self._send(200, (
+                "<html><head><meta charset='utf-8'><title>Study not available"
+                "</title><link rel='stylesheet' href='/style.css'></head><body>"
+                "<header><h1>Trial Scout</h1></header><main class='card'>"
+                "<p>Could not load study " + nct_id + " right now: "
+                + str(exc)[:120] + "</p>"
+                "<p><a href='/'>Back to the trial list</a></p></main></body></html>"
+            ).encode("utf-8"), "text/html; charset=utf-8")
+            return
+        phases = ", ".join(study.get("phases") or ["not applicable"])
+        sites = NL.join(
+            f"- {loc.get('facility','')}, {loc.get('city','')}, {loc.get('state','')}"
+            for loc in (study.get("locations") or [])[:20]
+        ) or "none listed"
+        criteria = (study.get("criteria") or "not available").replace("<", "&lt;")
+        summary = (study.get("summary") or "").replace("<", "&lt;")
+        html = f"""<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{nct_id} - Trial Scout</title>
+<link rel="stylesheet" href="/style.css"></head>
+<body>
+<header><h1>Trial Scout</h1></header>
+<main class="card">
+<p><a href="/">&#8592; Back to the trial list</a></p>
+<h2>{study.get('title', '').replace('<', '&lt;')}</h2>
+<p><strong>{nct_id}</strong> &middot; status: {study.get('status','')} &middot; phase: {phases}</p>
+<p>Age range: {study.get('min_age') or 'any'} to {study.get('max_age') or 'any'}
+&middot; enrollment: {study.get('enrollment') or '?'}</p>
+<p><a href="https://clinicaltrials.gov/study/{nct_id}" target="_blank" rel="noopener">
+Official page on ClinicalTrials.gov</a> (if it will not open, try again later
+in a regular browser window)</p>
+<h3>What this study is about</h3>
+<p style="white-space:pre-wrap">{summary}</p>
+<h3>Where it takes place</h3>
+<p style="white-space:pre-wrap">{sites}</p>
+<h3>Full requirements (who can and cannot join)</h3>
+<p style="white-space:pre-wrap">{criteria}</p>
+<p><a href="/">Back to the trial list</a></p>
+</main></body></html>"""
+        self._send(200, html.encode("utf-8"), "text/html; charset=utf-8")
 
     def _context(self):
         digest_path = Path(env("TRIAL_SCOUT_DIGEST_PATH", "data/research_digest.md"))
