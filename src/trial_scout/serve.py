@@ -275,6 +275,9 @@ class Handler(BaseHTTPRequestHandler):
             f"user): family situation: {profile_summary(profile)}. "
             f"Data refreshed: {updated}. Current shortlist:{NL}{listing}"
         )
+        if SCIENCE_PATH.exists():
+            science = SCIENCE_PATH.read_text(errors="replace")
+            system += NL + NL + "SCIENCE BACKGROUND:" + NL + science
         if digest:
             system += NL + NL + "Recent research notes:" + NL + digest
         base = env("OPENAI_BASE_URL", "https://api.openai.com/v1").rstrip("/")
@@ -287,11 +290,13 @@ class Handler(BaseHTTPRequestHandler):
         }
         if "venice.ai" in base:
             # Venice-only controls: keep our own system prompt, suppress
-            # reasoning-model think-tags, cap output length.
+            # reasoning-model think-tags, allow server-side web search so
+            # answers can use current sources.
             payload["venice_parameters"] = {
                 "include_venice_system_prompt": False,
                 "disable_thinking": True,
                 "strip_thinking_response": True,
+                "enable_web_search": "auto",
             }
         request = urllib.request.Request(
             base + "/chat/completions",
