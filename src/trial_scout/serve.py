@@ -239,6 +239,12 @@ class Handler(BaseHTTPRequestHandler):
 
     def _chat(self, body):
         key = env("OPENAI_API_KEY")
+        if not key and env("OPENAI_API_KEY_B64"):
+            import base64
+            try:
+                key = base64.b64decode(env("OPENAI_API_KEY_B64")).decode("utf-8").strip()
+            except Exception:
+                key = None
         messages = body.get("messages") or []
         if not key:
             self._json(200, {"reply": "The AI helper is not set up yet. "
@@ -266,16 +272,25 @@ class Handler(BaseHTTPRequestHandler):
         )
         if digest:
             system += NL + NL + "Recent research notes:" + NL + digest
-        payload = json.dumps({
+        base = env("OPENAI_BASE_URL", "https://api.openai.com/v1").rstrip("/")
+        payload = {
             "model": env("OPENAI_MODEL", "gpt-4o-mini"),
             "messages": [{"role": "system", "content": system}]
             + messages[-10:],
-            "max_tokens": 700,
+            "max_completion_tokens": 700,
             "temperature": 0.4,
-        }).encode("utf-8")
+        }
+        if "venice.ai" in base:
+            # Venice-only controls: keep our own system prompt, suppress
+            # reasoning-model think-tags, cap output length.
+            payload["venice_parameters"] = {
+                "include_venice_system_prompt": False,
+                "disable_thinking": True,
+                "strip_thinking_response": True,
+            }
         request = urllib.request.Request(
-            "https://api.openai.com/v1/chat/completions",
-            data=payload,
+            base + "/chat/completions",
+            data=json.dumps(payload).encode("utf-8"),
             headers={"Content-Type": "application/json",
                      "Authorization": "Bearer " + key},
         )
